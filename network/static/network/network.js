@@ -13,60 +13,96 @@ function new_post() {
       console.log(result);
       content.value = ""
 
-      load_posts()
+      fetch_posts()
   });
 }
 
-function load_posts() {
-
+function fetch_posts(page = 1){
     // Hide the user div
     document.querySelector("#user-div").style.display = "none"
 
     fetch('/posts', {
-        method: 'GET'
+        method: 'POST',
+        body: JSON.stringify({
+            page: page
+        })
     })
     .then(response => response.json())
     .then(results => {
+        console.log(results)
 
-        posts = results.posts
-        // Print result
-        console.log(posts);
+        // Load the posts into the view
+        load_posts(results.posts)
 
-        const posts_space = document.querySelector("#posts-view");
-        posts_space.innerHTML = ""
-
-        posts.forEach( post => {
-            const p = show_post(post)
-            posts_space.appendChild( p )
-        })
-
+        // Update the pagination
+        update_pagination(results.pages, "fetch_posts")
     });
 }
 
-function following() {
+function update_pagination(pages, link, param=null) {
+    // Update pagination
+    const previous_page = pages.current_page > 1 ? pages.current_page - 1 : 1
+    const next_page = pages.current_page < pages.num_pages ? pages.current_page + 1 : pages.num_pages
+
+    const pagination = document.querySelector("#pagination");
+    pagination.innerHTML = ""
+
+    // Needed to follow author
+    param = (param != null ? param + "," : "")
+
+    const start = document.createElement("li")
+    start.classList="page-item"
+    start.innerHTML = `<a class="page-link" href="#" tabindex="-1" onclick=${link}(${param}${previous_page})>Previous</a>`
+    pagination.appendChild(start)
+
+    for (let x = 1; x < pages.num_pages + 1; x++) {
+        const li = document.createElement("li")
+        active = (x == pages.current_page ? "active" : "")
+        li.classList = `page-item ${active}`
+        li.innerHTML = `<a class="page-link" href="#" onclick=${link}(${param}${x})>${x}</a>`
+        pagination.appendChild(li)
+    }
+
+    const end = document.createElement("li")
+    end.classList="page-item"
+    end.innerHTML = `<a class="page-link" href="#" onclick=${link}(${param}${next_page})>Next</a>`
+    pagination.appendChild(end)
+
+
+}
+
+function load_posts(posts) {
+
+    const posts_space = document.querySelector("#posts-view");
+    posts_space.innerHTML = ""
+
+    posts.forEach( post => {
+        const p = show_post(post)
+        posts_space.appendChild( p )
+    })
+}
+
+function fetch_following(page = 1) {
 
     // Hide the user div
     document.querySelector("#user-div").style.display = "none"
     document.querySelector("#new-post-div").style.display = "none"
 
     fetch('/following', {
-        method: 'GET',
-        
+        method: 'POST',
+        body: JSON.stringify({
+            page: page
+        })
     })
     .then(response => response.json())
     .then(results => {
+        console.log(results);
+        
+        // Load the posts into the view
+        load_posts(results.posts)
 
-        posts = results.posts
-        // Print result
-        console.log(posts);
-
-        const posts_space = document.querySelector("#posts-view");
-        posts_space.innerHTML = ""
-
-        posts.forEach( post => {
-            const p = show_post(post)
-            posts_space.appendChild( p )
-        })
+        // Update the pagination
+        update_pagination(results.pages, "fetch_following")
 
     });
 
@@ -77,12 +113,13 @@ function clicked() {
     return false
 }
 
-function fetch_author(id) {
+function fetch_author(id, page=1) {
     console.log(id)
     fetch('/fetch_author', {
         method: 'POST',
         body: JSON.stringify({
-            id: id
+            id: id,
+            page:page
         })
     })
     .then(response => response.json())
@@ -91,17 +128,10 @@ function fetch_author(id) {
         // Print out results
         console.log(results)
 
-        posts = results.posts
+        load_posts(results.posts)
+        update_pagination(results.pages, "fetch_author", id)
 
-        // Get the post div and clear it
-        const posts_space = document.querySelector("#posts-view");
-        posts_space.innerHTML = ""
 
-        // For each post, print it out
-        posts.forEach( post => {
-            const p = show_post(post)
-            posts_space.appendChild( p )
-        })
 
         // Print out the author information
         show_user(results.author)

@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.paginator import Paginator
 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -105,16 +106,33 @@ def new_post(request):
         "content": data.get("content")
     })
 
-
+@csrf_exempt
 def posts(request):
 
     posts = Post.objects.all().order_by('-timestamp')
 
-    return JsonResponse({
+    return send_json_posts(request, posts)
+
+
+def send_json_posts(request, posts, dict = {}):
+    if request.method == "POST":
+        # Get new post data
+        data = json.loads(request.body)
+        requested_page = data.get("page")
+    else:
+        requested_page = 1
+
+    p = Paginator(posts, 3)
+    page = p.page(requested_page)
+
+    return JsonResponse( {**dict, 
         "success":True,
-        "posts": [post.serialize() for post in posts]
-        
-        })
+        "posts": [post.serialize() for post in page.object_list],
+        "pages": {
+            "num_pages":p.num_pages,
+            "current_page":requested_page
+        }
+        })    
 
 
 @csrf_exempt
@@ -168,13 +186,9 @@ def following(request):
     posts = Post.objects.filter(author__in=user_list)
 
 
-    return JsonResponse({
-        "success": True,
-        "posts": [post.serialize() for post in posts]
-    })
-    # return render(request, "network/index.html", {
-    #     "Posts":posts
-    # })
+    return send_json_posts(request, posts)
+
+
 
 @csrf_exempt
 def fetch_author(request):
@@ -190,25 +204,35 @@ def fetch_author(request):
         })
 
     user = request.user
+    author = User.objects.get(id=data.get("id"))
 
     # Check if user is authenticated. If true, 
     if request.user.is_authenticated:
-        is_self = author == user
+        is_self = (author == user)
         is_following = user.is_following(author)
     else:
         # If user is not authenticated, make up some values
         is_self = True,
         is_following = False,
 
-    author = User.objects.get(id=data.get("id"))
-
     # Get all the posts that the author has made
     posts = author.posts.all()
 
-    return JsonResponse({
-        "success": True,
+    
+
+    response = {
         "author": author.serialize(),
-        "posts": [post.serialize() for post in posts],
         "is_self": is_self,
-        "is_following": is_following,
-    })
+        "is_following": is_following
+    }
+
+    return send_json_posts(request, posts, response)
+
+
+    # return JsonResponse({
+    #     "success": True,
+    #     "author": author.serialize(),
+    #     "posts": [post.serialize() for post in posts],
+    #     "is_self": is_self,
+    #     "is_following": is_following,
+    # })

@@ -176,9 +176,7 @@ def following(request):
     #     "Posts":posts
     # })
 
-
 @csrf_exempt
-@login_required
 def fetch_author(request):
 
     # Separate the data
@@ -192,6 +190,16 @@ def fetch_author(request):
         })
 
     user = request.user
+
+    # Check if user is authenticated. If true, 
+    if request.user.is_authenticated:
+        is_self = author == user
+        is_following = user.is_following(author)
+    else:
+        # If user is not authenticated, make up some values
+        is_self = True,
+        is_following = False,
+
     author = User.objects.get(id=data.get("id"))
 
     # Get all the posts that the author has made
@@ -200,7 +208,7 @@ def fetch_author(request):
     return JsonResponse({
         "success": True,
         "author": author.serialize(),
-        "is_following": user.is_following(author),
         "posts": [post.serialize() for post in posts],
-        "is_self": author == user
+        "is_self": is_self,
+        "is_following": is_following,
     })

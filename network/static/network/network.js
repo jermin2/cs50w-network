@@ -21,7 +21,6 @@ function load_posts() {
 
     // Hide the user div
     document.querySelector("#user-div").style.display = "none"
-    document.querySelector("#new-post-div").style.display = "block"
 
     fetch('/posts', {
         method: 'GET'

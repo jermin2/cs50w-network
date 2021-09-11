@@ -49,8 +49,7 @@
         <hr />
     </div>
 
-
-    <div class="posts-view container" id="new-post-div" style='display:{{ user.is_authenticated|yesno:"block,none,none" }}'>
+    <div class="posts-view container" id="new-post-div" style='display:{{user.is_authenticated|yesno:"block,none"}}'>
         <div class="post" >
             <h2>New Post</h2>
             <textarea id="new-post-content"></textarea>

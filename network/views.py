@@ -1,10 +1,15 @@
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
+from django.http import JsonResponse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+
+from .models import User, Post
 
 
 def index(request):
@@ -61,3 +66,87 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+
+def author(request, id):
+    if request.method == "GET":
+
+        author = User.objects.get(id=id)
+
+        return render(request, "network/author.html", {
+            'author':author,
+            'posts':author.posts.all(),
+            'following': request.user.is_following(author)
+        })
+
+@csrf_exempt
+@login_required
+def new_post(request):
+    if request.method != "POST":
+        print(request)
+        return JsonResponse({"error": "POST request required."}, status=400)
+
+    # Get new post data
+    data = json.loads(request.body)
+    content = data.get("content")
+
+    if (len(content) == 0):
+        return JsonResponse({"error": "Empty Post"}, status=401)
+
+    # Get user id
+    user = request.user
+
+    # Create a post object
+    p = Post.objects.create(author=user,content=data.get("content"))
+    p.save()
+
+    return JsonResponse({
+        "success": "New Post Created Successfully",
+        "user": str(request.user),
+        "content": data.get("content")
+    })
+
+
+@csrf_exempt
+@login_required
+def posts(request):
+
+    posts = Post.objects.all().order_by('-timestamp')
+
+    return JsonResponse([post.serialize() for post in posts], safe=False)
+
+
+@csrf_exempt
+@login_required
+def follow(request):
+
+    try:
+        # Get new post data
+        data = json.loads(request.body)
+    except:
+        print(request)
+        return JsonResponse({
+            "error": "Encountered some error"
+        })
+
+    user = request.user
+    follow_user_id = data.get("id")
+    follow = data.get("follow")
+
+    follow_user = User.objects.get(id=follow_user_id)
+
+    # Check that user and follow_user are not the same (can't follow yourself)
+    if (user != follow_user):
+        if (follow == True):
+            follow_user.followers.add(user)
+        else:
+            follow_user.followers.remove(user)
+
+        return JsonResponse({
+            "success": f"{user} is now {follow} following {follow_user}",
+            "followers": follow_user.followers.count()
+        })
+    
+    return JsonResponse({
+        "failure": "Can't follow yourself"
+    })
+

@@ -1,0 +1,102 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+<style>
+    #followers {
+        margin:20px;
+    }
+
+    table {
+        width:100%;
+    }
+
+    #follow-btn #unfollow-btn {
+        margin-left:20%
+    }
+
+</style>
+<div class="container mt-3">
+    <div>
+        <h3 id="username">{{author.username}}</h3>
+        <div id="email" class="text-muted">{{author.email}}</div>
+        <input type="text" id="id" value="{{author.id}}" hidden>
+    </div>
+    <hr />
+    <table>
+        <tr>
+            <td class="h4 text-muted">Followers</td>
+            <td class="h4 text-muted">Follows</td>
+        </tr>
+        <tr>
+            <td class="h4"><div id="followers" style="display:inline-block">{{author.followers.count}} </div>
+                    {% if following %} 
+                    <button id="follow-btn" onClick="follow(true)" class="btn btn-primary" style="display:none">Follow</button>
+                    <button id="unfollow-btn" onClick="follow(false)" class="btn btn-primary">UnFollow</button>
+                    {% else %}
+                    <button id="follow-btn" onClick="follow(true)" class="btn btn-primary">Follow</button>
+                    <button id="unfollow-btn" onClick="follow(false)" class="btn btn-primary" style="display:none">UnFollow</button>
+                    {% endif %}</td>
+            <td id="follows" class="h4">1</td>
+        </tr>
+    </table>
+    <hr />
+
+    <h3>Posts</h3>
+    <div id="posts">
+        
+        {% for post in posts %}
+        <div class="post">
+            <h3>{{post.author.username}}</h3>
+            <div>{{post.content}}</div>
+            <div class="text-muted">{{post.timestamp}}</div>
+            <p>❤️ {{post.likes}} likes</p>
+
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+
+{% block script %}
+    <script src="{% static 'network/network.js' %}?v=2"></script>
+    <script>
+        function follow(f=true) {
+            const author_id = document.querySelector('#id').value
+
+            fetch('/follow', {
+            method: 'POST',
+            body: JSON.stringify({
+                id: author_id,
+                follow: f
+            })
+            })
+            .then(response => response.json())
+            .then(result => {
+                // Print result
+                console.log(result);
+
+                // Update the number of followers
+                document.querySelector('#followers').innerHTML = result.followers
+
+                // if we are going to follow
+                if(f) {
+                    document.querySelector('#follow-btn').style.display = "none";
+                    document.querySelector('#unfollow-btn').style.display = "inline-block";
+                }
+                else {
+                    document.querySelector('#follow-btn').style.display = "inline-block";
+                    document.querySelector('#unfollow-btn').style.display = "none";
+                }
+
+
+                
+            });
+
+        }
+
+        // Check if we are already following the author
+
+    </script>
+{% endblock %}

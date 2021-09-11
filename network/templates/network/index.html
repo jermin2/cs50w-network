@@ -1,5 +1,46 @@
 {% extends "network/layout.html" %}
+{% load static %}
 
 {% block body %}
-    TODO
+
+    <style>
+        .post-new-div {
+            border: solid black 2px;
+            padding:20px;
+            margin:20px;
+        }
+
+        .post-new-div > textarea {
+            width:100%;
+        }
+
+
+
+    </style>
+
+    <div class="post-new-div">
+        <h2>New Post</h2>
+        <textarea id="new-post-content"></textarea>
+        <button id="new-post-btn" class="btn btn-primary">Post</button>
+    </div>
+    <div class="posts-view" id="posts-view">
+        All the other posts will appear here
+    </div>
+{% endblock %}
+
+
+{% block script %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("All loaded")
+        
+            document.querySelector("#new-post-btn").onclick = () => {
+                new_post()
+            }
+        
+            load_posts()
+        })
+    </script>
+    <script src="{% static 'network/network.js' %}?v=2"></script>
 {% endblock %}

@@ -30,12 +30,15 @@
         </tr>
         <tr>
             <td class="h4"><div id="followers" style="display:inline-block">{{author.followers.count}} </div>
-                    {% if following %} 
-                    <button id="follow-btn" onClick="follow(true)" class="btn btn-primary" style="display:none">Follow</button>
-                    <button id="unfollow-btn" onClick="follow(false)" class="btn btn-primary">UnFollow</button>
+                    {% if author.id == user.id %}
+                        <button id="follow-btn" onClick="follow(true)" class="btn btn-primary" style="display:none">Follow</button>
+                        <button id="unfollow-btn" onClick="follow(false)" class="btn btn-primary" style="display:none">UnFollow</button>
+                    {% elif following %} 
+                        <button id="follow-btn" onClick="follow(true)" class="btn btn-primary" style="display:none">Follow</button>
+                        <button id="unfollow-btn" onClick="follow(false)" class="btn btn-primary">UnFollow</button>
                     {% else %}
-                    <button id="follow-btn" onClick="follow(true)" class="btn btn-primary">Follow</button>
-                    <button id="unfollow-btn" onClick="follow(false)" class="btn btn-primary" style="display:none">UnFollow</button>
+                        <button id="follow-btn" onClick="follow(true)" class="btn btn-primary">Follow</button>
+                        <button id="unfollow-btn" onClick="follow(false)" class="btn btn-primary" style="display:none">UnFollow</button>
                     {% endif %}</td>
             <td id="follows" class="h4">1</td>
         </tr>
@@ -81,14 +84,17 @@
                 document.querySelector('#followers').innerHTML = result.followers
 
                 // if we are going to follow
-                if(f) {
-                    document.querySelector('#follow-btn').style.display = "none";
-                    document.querySelector('#unfollow-btn').style.display = "inline-block";
+                if(result.success){
+                    if(f) {
+                        document.querySelector('#follow-btn').style.display = "none";
+                        document.querySelector('#unfollow-btn').style.display = "inline-block";
+                    }
+                    else {
+                        document.querySelector('#follow-btn').style.display = "inline-block";
+                        document.querySelector('#unfollow-btn').style.display = "none";
+                    }
                 }
-                else {
-                    document.querySelector('#follow-btn').style.display = "inline-block";
-                    document.querySelector('#unfollow-btn').style.display = "none";
-                }
+
 
 
                 

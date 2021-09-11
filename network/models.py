@@ -11,7 +11,10 @@ class User(AbstractUser):
     def serialize(self):
         return {
             "id": self.id,
+            "email":self.email, 
             "username": self.username,
+            "followers": self.followers.count(),
+            "following": self.following.count()
         }
 
     def is_following(self, user):

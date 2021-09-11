@@ -106,13 +106,15 @@ def new_post(request):
     })
 
 
-@csrf_exempt
-@login_required
 def posts(request):
 
     posts = Post.objects.all().order_by('-timestamp')
 
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    return JsonResponse({
+        "success":True,
+        "posts": [post.serialize() for post in posts]
+        
+        })
 
 
 @csrf_exempt
@@ -142,11 +144,63 @@ def follow(request):
             follow_user.followers.remove(user)
 
         return JsonResponse({
-            "success": f"{user} is now {follow} following {follow_user}",
+            "success": True,
+            "message": f"{user} is now {follow} following {follow_user}",
             "followers": follow_user.followers.count()
         })
     
     return JsonResponse({
-        "failure": "Can't follow yourself"
+        "success": False,
+        "message": f"Cannot follow yourself"
     })
 
+
+@csrf_exempt
+@login_required
+def following(request):
+    
+    user = request.user
+
+    # Get list of users we are following
+    user_list = list(user.following.all())
+
+    # Get all the posts where the author is in the above list
+    posts = Post.objects.filter(author__in=user_list)
+
+
+    return JsonResponse({
+        "success": True,
+        "posts": [post.serialize() for post in posts]
+    })
+    # return render(request, "network/index.html", {
+    #     "Posts":posts
+    # })
+
+
+@csrf_exempt
+@login_required
+def fetch_author(request):
+
+    # Separate the data
+    try:
+        # Get new post data
+        data = json.loads(request.body)
+    except:
+        print(request)
+        return JsonResponse({
+            "error": "Encountered some error"
+        })
+
+    user = request.user
+    author = User.objects.get(id=data.get("id"))
+
+    # Get all the posts that the author has made
+    posts = author.posts.all()
+
+    return JsonResponse({
+        "success": True,
+        "author": author.serialize(),
+        "is_following": user.is_following(author),
+        "posts": [post.serialize() for post in posts],
+        "is_self": author == user
+    })

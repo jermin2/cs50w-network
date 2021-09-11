@@ -4,26 +4,61 @@
 {% block body %}
 
     <style>
-        .post-new-div {
-            border: solid black 2px;
-            padding:20px;
-            margin:20px;
-        }
-
-        .post-new-div > textarea {
+        textarea {
             width:100%;
         }
 
+        #followers {
+        margin:20px;
+        }
 
+        table {
+            width:100%;
+        }
+
+        #follow-btn #unfollow-btn {
+            margin-left:20%
+        }
+
+        #user-div, #new-post-div {
+            display:none;
+        }
 
     </style>
 
-    <div class="post-new-div">
-        <h2>New Post</h2>
-        <textarea id="new-post-content"></textarea>
-        <button id="new-post-btn" class="btn btn-primary">Post</button>
+    <div class="container mt-3" id="user-div">
+        <div>
+            <h3 id="user-username">Author</h3>
+            <div id="user-email" class="text-muted">author@email.com</div>
+            <input type="text" id="user-id" value="{{author.id}}" hidden>
+        </div>
+        <hr />
+        <table>
+            <tr>
+                <td class="h4 text-muted">Followers</td>
+                <td class="h4 text-muted">Follows</td>
+            </tr>
+            <tr>
+                <td class="h4"><div id="user-followers" style="display:inline-block">0 </div>
+                    <button id="follow-btn" onClick="follow(true)" class="btn btn-primary" style="display:none">Follow</button>
+                    <button id="unfollow-btn" onClick="follow(false)" class="btn btn-primary" style="display:none">UnFollow</button>
+                    </td>
+                <td id="user-following" class="h4">1</td>
+            </tr>
+        </table>
+        <hr />
     </div>
-    <div class="posts-view" id="posts-view">
+
+
+    <div class="posts-view container" id="new-post-div" style='display:{{ user.is_authenticated|yesno:"block,none,none" }}'>
+        <div class="post" >
+            <h2>New Post</h2>
+            <textarea id="new-post-content"></textarea>
+            <button id="new-post-btn" class="btn btn-primary">Post</button>
+        </div>
+    </div>
+
+    <div class="posts-view container" id="posts-view">
         All the other posts will appear here
     </div>
 {% endblock %}
@@ -37,10 +72,19 @@
         
             document.querySelector("#new-post-btn").onclick = () => {
                 new_post()
+                return false
             }
-        
+
+            document.querySelector("#all-posts-btn").onclick = () => {
+                load_posts()
+                return false
+            }
+            
+            
+            // by default, load all the posts
             load_posts()
+
         })
     </script>
-    <script src="{% static 'network/network.js' %}?v=2"></script>
+    <script src="{% static 'network/network.js' %}?v=3"></script>
 {% endblock %}

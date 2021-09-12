@@ -171,11 +171,61 @@ function show_user(user) {
     document.querySelector("#new-post-div").style.display = "none"
 }
 
-function edit_post() {
-    console.log("hi")
-    console.log(edit_post.caller)
+/** Edit the post by enabling it */
+function edit_post(element) {
+    
+    // Make textarea editable and show border
+    const ta = element.parentElement.parentElement.querySelector("textarea")
+    ta.disabled = false
+    ta.classList.remove("content-display-only")
+
+    // show save button
+    element.style.display = "none"
+    element.parentElement.querySelector(".save").style.display = "inline-block"
 }
 
+/** Save a post by sending a JSON request */
+function save_post(element){
+    // Get the parent div element for the meta information
+    const parent = element.parentElement.parentElement
+
+    // Get user_id
+    const user_id = JSON.parse(document.getElementById('user_id').textContent);
+
+    // Get the text area element 
+    const ta = parent.querySelector("textarea")
+
+    // Front-end check for author
+    if(parent.dataset.author_id != user_id) {
+        console.log("You are not author!")
+        return
+    }
+
+    // Send the Json request containing post_id, and content
+    fetch('/edit_post', {
+    method: 'POST',
+    body: JSON.stringify({
+        post_id: parent.dataset.post_id,
+        content: ta.value
+    })
+    })
+    .then(response => response.json())
+    .then(result => {
+        // Print result
+        ta.value = result.content
+
+    });
+
+    // Make textarea uneditable and hide border
+    ta.disabled = true
+    ta.classList.add("content-display-only")
+
+    // show edit button
+    element.style.display = "none"
+    element.parentElement.querySelector(".edit").style.display = "inline-block"
+}
+
+/** Creates the DOM element for a post */
 function show_post(post) {
 
     const user_id = JSON.parse(document.getElementById('user_id').textContent);
@@ -196,12 +246,12 @@ function show_post(post) {
     // Show edit button
     if (user_id === post.author.id) {
         const edit_btn = document.createElement("a")
-        edit_btn.classList = "btn mx-3 edit"
+        edit_btn.classList = "btn mx-3 edit btn-outline-primary btn-small"
         edit_btn.innerHTML = "edit"
         author.appendChild(edit_btn)
 
         const save_btn = document.createElement("a")
-        save_btn.classList = "btn mx-3 save"
+        save_btn.classList = "btn mx-3 save btn-primary text-white"
         save_btn.innerHTML = "save"
         save_btn.style.display = "none"
         author.appendChild(save_btn)
@@ -217,8 +267,9 @@ function show_post(post) {
     timestamp.classList = "text-muted"
     timestamp.innerHTML = post.timestamp
 
-    const likes = document.createElement("p")
-    likes.innerHTML = "❤️ " + post.likes + " likes"
+    const likes = document.createElement("div")
+    icon =  (post.is_liked ? "❤️" : "🤍" )
+    likes.innerHTML = `<a class='like'>${icon}</a> <div class='num_likes'>${post.likes}</div> likes`
 
     
     post_div.appendChild(content)
@@ -258,5 +309,30 @@ function follow(f=true) {
                 document.querySelector('#unfollow-btn').style.display = "none";
             }
         }
+    });
+}
+
+function like(element) {
+
+    // Get the parent element
+    const parent = element.parentElement.parentElement
+    const like_number = parent.querySelector(".num_likes")
+
+    // Send the Json request containing post_id, and content
+    fetch('/like', {
+    method: 'POST',
+    body: JSON.stringify({
+        post_id: parent.dataset.post_id
+    })
+    })
+    .then(response => response.json())
+    .then(result => {
+        // Print result
+        console.log(result)
+
+        // Show the result on the post
+        icon = (result.is_liked ? "❤️" : "🤍" )
+        like_number.innerHTML = result.num_likes
+        element.innerHTML = icon
     });
 }

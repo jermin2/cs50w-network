@@ -3,36 +3,11 @@
 
 {% block body %}
 
-    <style>
-        textarea {
-            width:100%;
-        }
-
-        #followers {
-        margin:20px;
-        }
-
-        table {
-            width:100%;
-        }
-
-        #follow-btn #unfollow-btn {
-            margin-left:20%
-        }
-
-        #user-div, #new-post-div {
-            display:none;
-        }
-
-        .content {
-            background-color:white;
-        }
-
-        .content-display-only {
-            border-style:none;
-        }
-
-    </style>
+<style>
+    a:hover {
+        cursor:pointer
+    }
+</style>
     {{ request.user.id|json_script:"user_id" }}
     <div class="container mt-3" id="user-div">
         <div>
@@ -102,6 +77,9 @@
             }
 
             document.querySelector("#all-posts-btn").onclick = () => {
+                {% if user.is_authenticated %}
+                document.querySelector("#new-post-div").style.display = "block"
+                {% endif %}
                 fetch_posts()
                 return false
             }
@@ -112,65 +90,25 @@
 
                 // If we clicked on an edit button
                 if (element.classList.contains("edit") ){
-
-                    // Make textarea editable and show border
-                    const ta = element.parentElement.parentElement.querySelector("textarea")
-                    ta.disabled = false
-                    ta.classList.remove("content-display-only")
-
-                    // show save button
-                    element.style.display = "none"
-                    element.parentElement.querySelector(".save").style.display = "inline-block"
+                    edit_post(element)
+                    return false
                 }
+                // If we clicked on a save button
                 if (element.classList.contains("save") ){
-
-                    // Get the parent div element for the meta information
-                    const parent = element.parentElement.parentElement
-
-                    // Get user_id
-                    const user_id = JSON.parse(document.getElementById('user_id').textContent);
-
-                    // Get the text area element 
-                    const ta = parent.querySelector("textarea")
-
-                    // Front-end check for author
-                    if(parent.dataset.author_id != user_id) {
-                        console.log("You are not author!")
-                        return
-                    }
-
-                    // Send the Json request containing post_id, and content
-                    fetch('/edit_post', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        post_id: parent.dataset.post_id,
-                        content: ta.value
-                    })
-                    })
-                    .then(response => response.json())
-                    .then(result => {
-                        // Print result
-                        ta.value = result.content
-
-                    });
-
-                    // Make textarea uneditable and hide border
-                    ta.disabled = true
-                    ta.classList.add("content-display-only")
-
-                    // show edit button
-                    element.style.display = "none"
-                    element.parentElement.querySelector(".edit").style.display = "inline-block"
+                    save_post(element)
+                    return false
                 }
-
-                
+                // If we clicked on the like button
+                if (element.classList.contains("like") ){
+                    like(element)
+                    return false
+                }
             })
-            
             
             // by default, load all the posts
             fetch_posts()
 
         })
     </script>
-    <script src="{% static 'network/network.js' %}?v=4"></script>
+    <script src="{% static 'network/network.js' %}?v=7"></script>
 {% endblock %}

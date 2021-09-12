@@ -122,12 +122,13 @@ def send_json_posts(request, posts, dict = {}):
     else:
         requested_page = 1
 
-    p = Paginator(posts, 3)
+    # 10 posts per page
+    p = Paginator(posts, 10)
     page = p.page(requested_page)
 
     return JsonResponse( {**dict, 
         "success":True,
-        "posts": [post.serialize() for post in page.object_list],
+        "posts": [post.serialize(request.user) for post in page.object_list],
         "pages": {
             "num_pages":p.num_pages,
             "current_page":requested_page
@@ -216,7 +217,7 @@ def fetch_author(request):
         is_following = False,
 
     # Get all the posts that the author has made
-    posts = author.posts.all()
+    posts = author.posts.all().order_by("-timestamp")
 
     
 
@@ -260,4 +261,40 @@ def edit_post(request):
     return JsonResponse({
         "success":"all good",
         "content":content
+    })
+
+
+@csrf_exempt
+@login_required
+def like(request):
+    if request.method == "POST":
+        # Get new post data
+        data = json.loads(request.body)
+        post_id = data.get("post_id")
+
+    else:
+        return JsonResponse({
+            "error":"Invalid route. Requires POST request"
+        })
+
+    # Get the user
+    user = request.user
+
+    # Fetch the post
+    p = Post.objects.get(id = post_id)
+
+    # Check if user has already liked the post
+    if p.likes.filter(id=user.id).exists():
+        p.likes.remove(user)
+        is_liked = False
+    else:
+        p.likes.add(user)
+        is_liked = True
+
+    p.save()
+
+    return JsonResponse({
+        "success":"all good",
+        "num_likes":p.likes.count(),
+        "is_liked":is_liked
     })

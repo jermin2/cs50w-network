@@ -24,8 +24,16 @@
             display:none;
         }
 
-    </style>
+        .content {
+            background-color:white;
+        }
 
+        .content-display-only {
+            border-style:none;
+        }
+
+    </style>
+    {{ request.user.id|json_script:"user_id" }}
     <div class="container mt-3" id="user-div">
         <div>
             <h3 id="user-username">Author</h3>
@@ -84,6 +92,7 @@
 {% block script %}
 
     <script>
+        
         document.addEventListener('DOMContentLoaded', function() {
             console.log("All loaded")
         
@@ -96,6 +105,66 @@
                 fetch_posts()
                 return false
             }
+
+            document.addEventListener('click', event => {
+                // Find what element was clicked on
+                const element = event.target
+
+                // If we clicked on an edit button
+                if (element.classList.contains("edit") ){
+
+                    // Make textarea editable and show border
+                    const ta = element.parentElement.parentElement.querySelector("textarea")
+                    ta.disabled = false
+                    ta.classList.remove("content-display-only")
+
+                    // show save button
+                    element.style.display = "none"
+                    element.parentElement.querySelector(".save").style.display = "inline-block"
+                }
+                if (element.classList.contains("save") ){
+
+                    // Get the parent div element for the meta information
+                    const parent = element.parentElement.parentElement
+
+                    // Get user_id
+                    const user_id = JSON.parse(document.getElementById('user_id').textContent);
+
+                    // Get the text area element 
+                    const ta = parent.querySelector("textarea")
+
+                    // Front-end check for author
+                    if(parent.dataset.author_id != user_id) {
+                        console.log("You are not author!")
+                        return
+                    }
+
+                    // Send the Json request containing post_id, and content
+                    fetch('/edit_post', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        post_id: parent.dataset.post_id,
+                        content: ta.value
+                    })
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        // Print result
+                        ta.value = result.content
+
+                    });
+
+                    // Make textarea uneditable and hide border
+                    ta.disabled = true
+                    ta.classList.add("content-display-only")
+
+                    // show edit button
+                    element.style.display = "none"
+                    element.parentElement.querySelector(".edit").style.display = "inline-block"
+                }
+
+                
+            })
             
             
             // by default, load all the posts
@@ -103,5 +172,5 @@
 
         })
     </script>
-    <script src="{% static 'network/network.js' %}?v=3"></script>
+    <script src="{% static 'network/network.js' %}?v=4"></script>
 {% endblock %}

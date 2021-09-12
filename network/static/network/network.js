@@ -79,6 +79,8 @@ function load_posts(posts) {
     posts.forEach( post => {
         const p = show_post(post)
         posts_space.appendChild( p )
+
+
     })
 }
 
@@ -169,14 +171,46 @@ function show_user(user) {
     document.querySelector("#new-post-div").style.display = "none"
 }
 
+function edit_post() {
+    console.log("hi")
+    console.log(edit_post.caller)
+}
+
 function show_post(post) {
+
+    const user_id = JSON.parse(document.getElementById('user_id').textContent);
+
+    // Create parent div element
     const post_div = document.createElement("div")
     post_div.classList = "post"
 
-    const author = document.createElement("h3")
-    author.innerHTML = `<a href='#' onclick="fetch_author(${post.author.id})"> ${post.author.username}</a>`
+    // save meta data
+    post_div.dataset.author_id = post.author.id
+    post_div.dataset.post_id = post.id
 
-    const content = document.createElement("div")
+    // User name -> links to user profile
+    const author = document.createElement("h3")
+    author.innerHTML = `<a href='#' onclick="fetch_author(${post.author.id})">${post.author.username}</a>`
+    post_div.appendChild(author)
+
+    // Show edit button
+    if (user_id === post.author.id) {
+        const edit_btn = document.createElement("a")
+        edit_btn.classList = "btn mx-3 edit"
+        edit_btn.innerHTML = "edit"
+        author.appendChild(edit_btn)
+
+        const save_btn = document.createElement("a")
+        save_btn.classList = "btn mx-3 save"
+        save_btn.innerHTML = "save"
+        save_btn.style.display = "none"
+        author.appendChild(save_btn)
+
+    }
+
+    const content = document.createElement("textarea")
+    content.classList = "content content-display-only"
+    content.disabled = true
     content.innerHTML = post.content
 
     const timestamp = document.createElement("div")
@@ -186,7 +220,7 @@ function show_post(post) {
     const likes = document.createElement("p")
     likes.innerHTML = "❤️ " + post.likes + " likes"
 
-    post_div.appendChild(author)
+    
     post_div.appendChild(content)
     post_div.appendChild(timestamp)
     post_div.appendChild(likes)

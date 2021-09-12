@@ -229,10 +229,35 @@ def fetch_author(request):
     return send_json_posts(request, posts, response)
 
 
-    # return JsonResponse({
-    #     "success": True,
-    #     "author": author.serialize(),
-    #     "posts": [post.serialize() for post in posts],
-    #     "is_self": is_self,
-    #     "is_following": is_following,
-    # })
+
+@csrf_exempt
+@login_required
+def edit_post(request):
+    if request.method == "POST":
+        # Get new post data
+        data = json.loads(request.body)
+        post_id = data.get("post_id")
+        content = data.get("content")
+    else:
+        return JsonResponse({
+            "error":"Invalid route. Requires POST request"
+        })
+
+
+    # Fetch the post
+    p = Post.objects.get(id = post_id)
+
+    # Backend check that we are the author
+    if request.user.id != p.author.id:
+        return JsonResponse({
+            "error":"Must be author of post to edit post",
+        })
+
+    # Save the new post
+    p.content = content
+    p.save()
+
+    return JsonResponse({
+        "success":"all good",
+        "content":content
+    })
